@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vulnsig"
 version = "0.1.0"
-description = "CVSS vulnerability signature glyphs as SVG"
+description = "Render CVSS vulnerability vectors as expressive SVG glyphs"
 requires-python = ">=3.10"
 license = "MIT"
 readme = "README.md"
