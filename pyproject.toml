@@ -14,7 +14,6 @@ dependencies = [
     "cvss==3.6",
 ]
 
-
 [project.urls]
 Homepage = "https://vulnsig.io"
 Repository = "https://github.com/vulnsig/vulnsig-py"
@@ -33,9 +32,6 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-
-
 
 [tool.ruff]
 line-length = 90
