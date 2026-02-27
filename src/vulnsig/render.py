@@ -1,10 +1,20 @@
 import ctypes
 import math
+from typing import NamedTuple
 
 from .color import score_to_hue
 from .geometry import arc_path, radial_cuts, ring_fill, star_path
 from .parse import detect_cvss_version, get_severity, is_version3, parse_cvss
 from .score import calculate_score
+
+
+class Sector(NamedTuple):
+    key: str
+    s: float  # start angle (degrees)
+    e: float  # end angle (degrees)
+    vuln: float
+    sub: float
+
 
 def render_glyph(vector: str, score: float | None = None, size: int = 120) -> str:
     metrics = parse_cvss(vector)
@@ -15,24 +25,36 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
         score = calculate_score(vector)
 
     hue_result = score_to_hue(score)
-    hue = hue_result["hue"]
-    sat = hue_result["sat"]
-    light = hue_result["light"]
+    hue = hue_result['hue']
+    sat = hue_result['sat']
+    light = hue_result['light']
 
     # Metric severities - handle CVSS 3.0, 3.1, and 4.0
-    ac = get_severity(metrics, "AC")
+    ac = get_severity(metrics, 'AC')
 
     # For CVSS 3.0/3.1, AT doesn't exist, so always treat as solid (AT:N)
-    at = 1.0 if is_version3(version) else get_severity(metrics, "AT")
+    at = 1.0 if is_version3(version) else get_severity(metrics, 'AT')
 
     # For CVSS 3.0/3.1, use C/I/A instead of VC/VI/VA
-    vc = get_severity(metrics, "C") if is_version3(version) else get_severity(metrics, "VC")
-    vi = get_severity(metrics, "I") if is_version3(version) else get_severity(metrics, "VI")
-    va = get_severity(metrics, "A") if is_version3(version) else get_severity(metrics, "VA")
+    vc = (
+        get_severity(metrics, 'C')
+        if is_version3(version)
+        else get_severity(metrics, 'VC')
+    )
+    vi = (
+        get_severity(metrics, 'I')
+        if is_version3(version)
+        else get_severity(metrics, 'VI')
+    )
+    va = (
+        get_severity(metrics, 'A')
+        if is_version3(version)
+        else get_severity(metrics, 'VA')
+    )
 
     # For CVSS 3.0/3.1, if S:C (Changed), both bands mirror C/I/A. If S:U (Unchanged), no split.
     if is_version3(version):
-        scope_changed = get_severity(metrics, "S") > 0.5  # S:C = 1.0, S:U = 0.0
+        scope_changed = get_severity(metrics, 'S') > 0.5  # S:C = 1.0, S:U = 0.0
         if scope_changed:
             # Split band: both bands mirror C/I/A
             sc, si, sa = vc, vi, va
@@ -41,15 +63,15 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
             sc = si = sa = 0.0
     else:
         # CVSS 4.0: use SC/SI/SA directly
-        sc = get_severity(metrics, "SC")
-        si = get_severity(metrics, "SI")
-        sa = get_severity(metrics, "SA")
+        sc = get_severity(metrics, 'SC')
+        si = get_severity(metrics, 'SI')
+        sa = get_severity(metrics, 'SA')
 
     has_any_sub = sc > 0 or si > 0 or sa > 0
     at_present = at < 0.5
 
     cx = cy = 60.0
-    petal_count = {"N": 8, "A": 6, "L": 4, "P": 3}.get(metrics.get("AV", ""), 8)  # type: ignore[call-overload]
+    petal_count = {'N': 8, 'A': 6, 'L': 4, 'P': 3}.get(metrics.get('AV', ''), 8)
 
     # Geometry constants
     ring_width = 4.375
@@ -70,11 +92,11 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     star_inner_r = star_outer_r * (0.55 - ac * 0.35)
 
     # PR stroke
-    pr_raw = metrics.get("PR", "")  # type: ignore[call-overload]
-    pr_stroke_width = 3.2 if pr_raw == "H" else (1.0 if pr_raw == "L" else 0.0)
+    pr_raw = metrics.get('PR', '')
+    pr_stroke_width = 3.2 if pr_raw == 'H' else (1.0 if pr_raw == 'L' else 0.0)
 
     # UI spikes/bumps
-    ui_raw = metrics.get("UI", "")  # type: ignore[call-overload]
+    ui_raw = metrics.get('UI', '')
     spike_base = hue_ring_r + ring_width / 2 - 0.5
 
     # Star fill — match the outer hue ring color
@@ -82,16 +104,16 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     sf_light = 52 * light
     sf_alpha = 0.85
 
-    bg_color = f"hsl({hue}, 4%, 5%)"
+    bg_color = f'hsl({hue}, 4%, 5%)'
 
     # Deterministic gradient ID from vector hash
-    grad_id = "sg-" + _simple_hash(vector)
+    grad_id = 'sg-' + _simple_hash(vector)
 
     # Sectors
     sectors = [
-        {"key": "C", "s": -150 + gap_deg / 2, "e": -30 - gap_deg / 2, "vuln": vc, "sub": sc},
-        {"key": "I", "s": -30 + gap_deg / 2, "e": 90 - gap_deg / 2, "vuln": vi, "sub": si},
-        {"key": "A", "s": 90 + gap_deg / 2, "e": 210 - gap_deg / 2, "vuln": va, "sub": sa},
+        Sector('C', s=-150 + gap_deg / 2, e=-30 - gap_deg / 2, vuln=vc, sub=sc),
+        Sector('I', s=-30 + gap_deg / 2, e=90 - gap_deg / 2, vuln=vi, sub=si),
+        Sector('A', s=90 + gap_deg / 2, e=210 - gap_deg / 2, vuln=va, sub=sa),
     ]
 
     parts: list[str] = []
@@ -101,11 +123,13 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     parts.append(
         f'<stop offset="0%" stop-color="hsla({hue}, {sf_sat * 1.1}%, {sf_light + 6}%, {min(1.0, sf_alpha + 0.1)})"/>'
     )
-    parts.append(f'<stop offset="100%" stop-color="hsla({hue}, {sf_sat}%, {sf_light}%, {sf_alpha})"/>')
-    parts.append("</radialGradient></defs>")
+    parts.append(
+        f'<stop offset="100%" stop-color="hsla({hue}, {sf_sat}%, {sf_light}%, {sf_alpha})"/>'
+    )
+    parts.append('</radialGradient></defs>')
 
     # Z-order 1: UI:N Spikes
-    if ui_raw == "N":
+    if ui_raw == 'N':
         for i in range(petal_count):
             a = (math.pi * 2 * i) / petal_count - math.pi / 2
             x1 = cx + math.cos(a) * spike_base
@@ -118,7 +142,7 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
             )
 
     # Z-order 2: UI:P Bumps
-    if ui_raw == "P":
+    if ui_raw == 'P':
         bump_r = 4.6
         for i in range(petal_count):
             a = (math.pi * 2 * i) / petal_count - math.pi / 2
@@ -154,24 +178,24 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
         # Vuln band (inner)
         vuln_band_outer = vuln_outer_r if has_any_sub else outer_r
         parts.append(
-            f'<path d="{arc_path(cx, cy, vuln_inner_r, vuln_band_outer, sec["s"], sec["e"])}" '
-            f'fill="{ring_fill(sec["vuln"], hue, sat, light)}"/>'
+            f'<path d="{arc_path(cx, cy, vuln_inner_r, vuln_band_outer, sec.s, sec.e)}" '
+            f'fill="{ring_fill(sec.vuln, hue, sat, light)}"/>'
         )
 
         # Sub band (outer) — only when split
         if has_any_sub:
             parts.append(
-                f'<path d="{arc_path(cx, cy, sub_inner_r, outer_r, sec["s"], sec["e"])}" '
-                f'fill="{ring_fill(sec["sub"], hue, sat, light)}"/>'
+                f'<path d="{arc_path(cx, cy, sub_inner_r, outer_r, sec.s, sec.e)}" '
+                f'fill="{ring_fill(sec.sub, hue, sat, light)}"/>'
             )
 
     # Z-order 8: AT:P radial cuts
     if at_present:
         for sec in sectors:
-            cuts = radial_cuts(sec["s"], sec["e"], cut_width_deg, cut_gap_deg)
+            cuts = radial_cuts(sec.s, sec.e, cut_width_deg, cut_gap_deg)
             for cut in cuts:
                 parts.append(
-                    f'<path d="{arc_path(cx, cy, vuln_inner_r - 0.5, outer_r + 0.5, cut["startDeg"], cut["endDeg"])}" '
+                    f'<path d="{arc_path(cx, cy, vuln_inner_r - 0.5, outer_r + 0.5, cut.start_deg, cut.end_deg)}" '
                     f'fill="{bg_color}"/>'
                 )
 
@@ -196,10 +220,10 @@ def _simple_hash(s: str) -> str:
 
 def _to_base36(n: int) -> str:
     if n == 0:
-        return "0"
+        return '0'
     digits: list[str] = []
-    alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
+    alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
     while n:
         digits.append(alphabet[n % 36])
         n //= 36
-    return "".join(reversed(digits))
+    return ''.join(reversed(digits))

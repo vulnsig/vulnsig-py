@@ -1,6 +1,12 @@
 import math
+from typing import NamedTuple
 
 _DEG2RAD = math.pi / 180
+
+
+class Cut(NamedTuple):
+    start_deg: float
+    end_deg: float
 
 
 def arc_path(
@@ -23,8 +29,8 @@ def arc_path(
     isx = cx + math.cos(s) * inner_r
     isy = cy + math.sin(s) * inner_r
     return (
-        f"M{osx},{osy} A{outer_r},{outer_r} 0 {la},1 {oex},{oey} "
-        f"L{iex},{iey} A{inner_r},{inner_r} 0 {la},0 {isx},{isy} Z"
+        f'M{osx},{osy} A{outer_r},{outer_r} 0 {la},1 {oex},{oey} '
+        f'L{iex},{iey} A{inner_r},{inner_r} 0 {la},0 {isx},{isy} Z'
     )
 
 
@@ -35,7 +41,7 @@ def star_path(
     outer_r: float,
     inner_r: float,
 ) -> str:
-    d = ""
+    d = ''
     for i in range(points):
         oa = (math.pi * 2 * i) / points - math.pi / 2
         ia = (math.pi * 2 * (i + 0.5)) / points - math.pi / 2
@@ -44,11 +50,11 @@ def star_path(
         ix = cx + math.cos(ia) * inner_r
         iy = cy + math.sin(ia) * inner_r
         if i == 0:
-            d += f"M{ox},{oy}"
+            d += f'M{ox},{oy}'
         else:
-            d += f"L{ox},{oy}"
-        d += f"L{ix},{iy}"
-    return d + "Z"
+            d += f'L{ox},{oy}'
+        d += f'L{ix},{iy}'
+    return d + 'Z'
 
 
 def radial_cuts(
@@ -56,8 +62,8 @@ def radial_cuts(
     end_deg: float,
     cut_width: float,
     gap_deg: float,
-) -> list[dict[str, float]]:
-    cuts: list[dict[str, float]] = []
+) -> list[Cut]:
+    cuts: list[Cut] = []
     sector_span = end_deg - start_deg
     step = cut_width + gap_deg
     # Number of visible segments = num_cuts + 1, each gap_deg wide.
@@ -68,14 +74,13 @@ def radial_cuts(
     offset = (sector_span - pattern_span) / 2
     for i in range(num_cuts):
         cut_start = start_deg + offset + (i + 1) * gap_deg + i * cut_width
-        cut_end = cut_start + cut_width
-        cuts.append({"startDeg": cut_start, "endDeg": cut_end})
+        cuts.append(Cut(start_deg=cut_start, end_deg=cut_start + cut_width))
     return cuts
 
 
 def ring_fill(magnitude: float, hue: float, sat: float, light: float = 1.0) -> str:
     if magnitude <= 0.01:
-        return f"hsla({hue}, {sat * 0.1}%, {12 * light}%, 0.9)"
+        return f'hsla({hue}, {sat * 0.1}%, {12 * light}%, 0.9)'
     if magnitude <= 0.5:
-        return f"hsla({hue}, {sat * 0.5}%, {35 * light}%, 0.92)"
-    return f"hsla({hue}, {sat * 0.9}%, {58 * light}%, 0.95)"
+        return f'hsla({hue}, {sat * 0.5}%, {35 * light}%, 0.92)'
+    return f'hsla({hue}, {sat * 0.9}%, {58 * light}%, 0.95)'
