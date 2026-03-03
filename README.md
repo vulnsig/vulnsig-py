@@ -72,3 +72,4 @@ Python 3.10+
 
 Improved glyph rendering over diverse backgrounds.
 
+Extension to the public interface.
