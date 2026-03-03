@@ -64,3 +64,11 @@ Each metric maps to a distinct visual channel:
 ## Requirements
 
 Python 3.10+
+
+
+## What Is New in VulnSig
+
+### 1.2.0
+
+Improved glyph rendering over diverse backgrounds.
+
