@@ -104,8 +104,6 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     sf_light = 52 * light
     sf_alpha = 0.85
 
-    bg_color = f'hsl({hue}, 4%, 5%)'
-
     # Deterministic gradient ID from vector hash
     grad_id = 'sg-' + _simple_hash(vector)
 
@@ -159,8 +157,8 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
                 f'fill="hsl({hue}, {sat}%, {52 * light}%)"/>'
             )
 
-    # Z-order 3: Background circle
-    parts.append(f'<circle cx="{cx}" cy="{cy}" r="{inner_r}" fill="{bg_color}"/>')
+    # Z-order 3: Background circle (transparent)
+    parts.append(f'<circle cx="{cx}" cy="{cy}" r="{inner_r}" fill="none"/>')
 
     # Z-order 4: Star fill
     star_d = star_path(cx, cy, petal_count, star_outer_r, star_inner_r)
@@ -173,7 +171,24 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
             f'stroke-width="{pr_stroke_width}" stroke-linejoin="round"/>'
         )
 
-    # Z-order 6 & 7: CIA ring sectors
+    # Z-order 6 & 7: CIA ring sectors (with AT:P clip-path if segmented)
+    if at_present:
+        # Build a clip-path that keeps only the visible segments (gaps between cuts)
+        clip_id = 'at-' + _simple_hash(vector)
+        clip_paths = ''
+        for sec in sectors:
+            cuts = radial_cuts(sec.s, sec.e, cut_width_deg, cut_gap_deg)
+            # Visible segments are the gaps between cuts
+            prev_end = sec.s
+            for cut in cuts:
+                if cut.start_deg > prev_end:
+                    clip_paths += f'<path d="{arc_path(cx, cy, vuln_inner_r - 1, outer_r + 1, prev_end, cut.start_deg)}"/>'
+                prev_end = cut.end_deg
+            if prev_end < sec.e:
+                clip_paths += f'<path d="{arc_path(cx, cy, vuln_inner_r - 1, outer_r + 1, prev_end, sec.e)}"/>'
+        parts.append(f'<clipPath id="{clip_id}">{clip_paths}</clipPath>')
+        parts.append(f'<g clip-path="url(#{clip_id})">')
+
     for sec in sectors:
         # Vuln band (inner)
         vuln_band_outer = vuln_outer_r if has_any_sub else outer_r
@@ -189,15 +204,8 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
                 f'fill="{ring_fill(sec.sub, hue, sat, light)}"/>'
             )
 
-    # Z-order 8: AT:P radial cuts
     if at_present:
-        for sec in sectors:
-            cuts = radial_cuts(sec.s, sec.e, cut_width_deg, cut_gap_deg)
-            for cut in cuts:
-                parts.append(
-                    f'<path d="{arc_path(cx, cy, vuln_inner_r - 0.5, outer_r + 0.5, cut.start_deg, cut.end_deg)}" '
-                    f'fill="{bg_color}"/>'
-                )
+        parts.append('</g>')
 
     # Z-order 9: Outer hue ring
     parts.append(

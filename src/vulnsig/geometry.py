@@ -80,7 +80,7 @@ def radial_cuts(
 
 def ring_fill(magnitude: float, hue: float, sat: float, light: float = 1.0) -> str:
     if magnitude <= 0.01:
-        return f'hsla({hue}, {sat * 0.1}%, {12 * light}%, 0.9)'
+        return f'hsla({hue}, {sat}%, {52 * light}%, 0.125)'
     if magnitude <= 0.5:
-        return f'hsla({hue}, {sat * 0.5}%, {35 * light}%, 0.92)'
-    return f'hsla({hue}, {sat * 0.9}%, {58 * light}%, 0.95)'
+        return f'hsla({hue}, {sat}%, {52 * light}%, 0.5)'
+    return f'hsl({hue}, {sat}%, {52 * light}%)'
