@@ -10,6 +10,12 @@ from vulnsig.score import calculate_score
 
 LOG4SHELL = 'CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H'
 
+# CVSS 4.0 vectors with E (Exploit Maturity) threat metric
+LOG4SHELL_E_A = LOG4SHELL + '/E:A'
+LOG4SHELL_E_P = LOG4SHELL + '/E:P'
+LOG4SHELL_E_U = LOG4SHELL + '/E:U'
+LOG4SHELL_E_X = LOG4SHELL + '/E:X'
+
 # CVSS 3.1 test vectors
 CVSS31_LOG4SHELL = 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H'
 CVSS31_HEARTBLEED = 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N'
@@ -37,6 +43,12 @@ class TestParseCVSS:
         assert m['AV'] == 'N'
         assert m['AC'] == 'L'
         assert m['SC'] == 'H'
+
+    def test_parses_e_metric(self):
+        assert parse_cvss(LOG4SHELL_E_A)['E'] == 'A'
+        assert parse_cvss(LOG4SHELL_E_P)['E'] == 'P'
+        assert parse_cvss(LOG4SHELL_E_U)['E'] == 'U'
+        assert parse_cvss(LOG4SHELL_E_X)['E'] == 'X'
 
     def test_handles_missing_optional_metrics(self):
         m = parse_cvss('CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H')
@@ -211,3 +223,36 @@ class TestRenderGlyph:
         svg = render_glyph(CVSS30_HEARTBLEED)
         assert '<svg' in svg
         assert '</svg>' in svg
+
+    def test_e_a_renders_concentric_rings(self):
+        import re
+
+        svg = render_glyph(LOG4SHELL_E_A, score=10)
+        assert re.search(r'<circle[^>]*stroke="hsla\(', svg)
+
+    def test_e_p_renders_solid_circle(self):
+        import re
+
+        svg = render_glyph(LOG4SHELL_E_P, score=10)
+        assert re.search(r'<circle[^>]*fill="hsla\(', svg)
+
+    def test_e_u_renders_no_marker(self):
+        import re
+
+        svg = render_glyph(LOG4SHELL_E_U, score=10)
+        assert not re.search(r'<circle[^>]*fill="hsla\(', svg)
+        assert not re.search(r'<circle[^>]*stroke="hsla\(', svg)
+
+    def test_e_x_renders_no_marker(self):
+        import re
+
+        svg = render_glyph(LOG4SHELL_E_X, score=10)
+        assert not re.search(r'<circle[^>]*fill="hsla\(', svg)
+        assert not re.search(r'<circle[^>]*stroke="hsla\(', svg)
+
+    def test_e_marker_ignored_for_cvss3x(self):
+        import re
+
+        svg = render_glyph(CVSS31_LOG4SHELL)
+        assert not re.search(r'<circle[^>]*fill="hsla\(', svg)
+        assert not re.search(r'<circle[^>]*stroke="hsla\(', svg)

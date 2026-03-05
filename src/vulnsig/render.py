@@ -93,7 +93,7 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
 
     # PR stroke
     pr_raw = metrics.get('PR', '')
-    pr_stroke_width = 3.2 if pr_raw == 'H' else (1.0 if pr_raw == 'L' else 0.0)
+    pr_stroke_width = 3.5 if pr_raw == 'H' else (1.5 if pr_raw == 'L' else 0.0)
 
     # UI spikes/bumps
     ui_raw = metrics.get('UI', '')
@@ -102,7 +102,7 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     # Star fill — match the outer hue ring color
     sf_sat = sat
     sf_light = 52 * light
-    sf_alpha = 0.85
+    sf_alpha = 1.0
 
     # Deterministic gradient ID from vector hash
     grad_id = 'sg-' + _simple_hash(vector)
@@ -117,9 +117,11 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     parts: list[str] = []
 
     # Defs
-    parts.append(f'<defs><radialGradient id="{grad_id}" cx="50%" cy="50%" r="50%">')
     parts.append(
-        f'<stop offset="0%" stop-color="hsla({hue}, {sf_sat * 1.1}%, {sf_light + 6}%, {min(1.0, sf_alpha + 0.1)})"/>'
+        f'<defs><radialGradient id="{grad_id}" gradientUnits="userSpaceOnUse" cx="{cx}" cy="{cy}" r="{star_outer_r}">'
+    )
+    parts.append(
+        f'<stop offset="0%" stop-color="hsla({hue}, {sf_sat * 1.1}%, {sf_light + 10}%, {sf_alpha})"/>'
     )
     parts.append(
         f'<stop offset="100%" stop-color="hsla({hue}, {sf_sat}%, {sf_light}%, {sf_alpha})"/>'
@@ -136,7 +138,7 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
             y2 = cy + math.sin(a) * (spike_base + 3.4)
             parts.append(
                 f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" '
-                f'stroke="hsl({hue}, {sat}%, {52 * light}%)" stroke-width="3.0" stroke-linecap="round"/>'
+                f'stroke="hsl({hue}, {sat}%, {sf_light}%)" stroke-width="3.0" stroke-linecap="round"/>'
             )
 
     # Z-order 2: UI:P Bumps
@@ -154,11 +156,35 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
             y2 = by + math.sin(perp_r) * bump_r
             parts.append(
                 f'<path d="M{x1},{y1} A{bump_r},{bump_r} 0 0,1 {x2},{y2} Z" '
-                f'fill="hsl({hue}, {sat}%, {52 * light}%)"/>'
+                f'fill="hsl({hue}, {sat}%, {sf_light}%)"/>'
             )
 
     # Z-order 3: Background circle (transparent)
     parts.append(f'<circle cx="{cx}" cy="{cy}" r="{inner_r}" fill="none"/>')
+
+    # Z-order 3.5: E (Exploit Maturity) marker — CVSS 4.0 only, behind the star
+    # A (Attacked) → concentric rings at 0.5 opacity
+    # P (PoC)      → solid filled circle at 0.375 opacity
+    # U / X        → no marker
+    e_raw = None if is_version3(version) else metrics.get('E')
+    if e_raw == 'A' or e_raw == 'P':
+        e_circle_r = inner_r - ring_gap
+        e_ring_gap = ring_gap * 3
+        if e_raw == 'A':
+            e_color = f'hsla({hue}, {sat}%, {sf_light}%, 0.5)'
+            sw = ring_width
+            step = sw + e_ring_gap
+            r = e_circle_r - sw / 2
+            while r - sw / 2 > 0:
+                parts.append(
+                    f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{e_color}" stroke-width="{sw}"/>'
+                )
+                r -= step
+        else:
+            # E:P → solid filled circle
+            parts.append(
+                f'<circle cx="{cx}" cy="{cy}" r="{e_circle_r}" fill="hsla({hue}, {sat}%, {sf_light}%, 0.375)"/>'
+            )
 
     # Z-order 4: Star fill
     star_d = star_path(cx, cy, petal_count, star_outer_r, star_inner_r)
@@ -167,7 +193,7 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     # Z-order 5: Star stroke (PR:N = no stroke)
     if pr_stroke_width > 0:
         parts.append(
-            f'<path d="{star_d}" fill="none" stroke="hsl({hue}, {sat}%, {72 * light}%)" '
+            f'<path d="{star_d}" fill="none" stroke="hsl({(hue + 10) % 360}, {sat * 0.8}%, {sf_light + 10}%)" '
             f'stroke-width="{pr_stroke_width}" stroke-linejoin="round"/>'
         )
 
@@ -210,7 +236,7 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     # Z-order 9: Outer hue ring
     parts.append(
         f'<circle cx="{cx}" cy="{cy}" r="{hue_ring_r}" fill="none" '
-        f'stroke="hsl({hue}, {sat}%, {52 * light}%)" stroke-width="{ring_width}"/>'
+        f'stroke="hsl({hue}, {sat}%, {sf_light}%)" stroke-width="{ring_width}"/>'
     )
 
     return (
