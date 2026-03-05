@@ -17,6 +17,8 @@ METRIC_DEFS: dict[MetricKey, dict[str, float]] = {
     'I': {'H': 1.0, 'L': 0.5, 'N': 0.0},
     'A': {'H': 1.0, 'L': 0.5, 'N': 0.0},
     'S': {'C': 1.0, 'U': 0.0},  # Scope: Changed or Unchanged
+    # CVSS 4.0 threat metric
+    'E': {'A': 1.0, 'P': 0.6, 'U': 0.2, 'X': 0.0},
 }
 
 

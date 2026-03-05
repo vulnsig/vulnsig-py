@@ -16,6 +16,7 @@ MetricKey = Literal[
     'I',
     'A',
     'S',
+    'E',
 ]
 
 
@@ -38,6 +39,8 @@ class ParsedMetrics(TypedDict, total=False):
     I: Literal['H', 'L', 'N']  # noqa: E741
     A: Literal['H', 'L', 'N']
     S: Literal['C', 'U']  # Scope: Changed or Unchanged
+    # CVSS 4.0 threat metric
+    E: Literal['A', 'P', 'U', 'X']
 
 
 class HueResult(TypedDict):
