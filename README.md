@@ -4,6 +4,10 @@ Render CVSS vulnerability vectors as expressive SVG glyphs. Each glyph encodes a
 
 Supports CVSS 4.0, 3.1, and 3.0.
 
+Visit [vulnsig.io](https://vulnsig.io) to interactively explore CVSS glyph configurations and recent or well-known CVE vector glyphs.
+
+
+
 ## Install
 
 ```bash
@@ -67,6 +71,13 @@ Python 3.10+
 
 
 ## What Is New in VulnSig
+
+### 1.3.0
+
+Added rendering of Exploit Maturity.
+
+Improved rendering of PR.
+
 
 ### 1.2.0
 
