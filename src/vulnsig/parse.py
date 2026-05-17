@@ -21,7 +21,16 @@ METRIC_DEFS: dict[MetricKey, dict[str, float]] = {
     'A': {'H': 1.0, 'C': 1.0, 'L': 0.5, 'P': 0.5, 'N': 0.0},
     'S': {'C': 1.0, 'U': 0.0},  # Scope: Changed or Unchanged
     # Exploit Maturity — superset of CVSS 4.0 (A/P/U/X) and CVSS 2.0 (U/POC/F/H/ND).
-    'E': {'A': 1.0, 'H': 1.0, 'F': 0.8, 'P': 0.6, 'POC': 0.6, 'U': 0.2, 'X': 0.0, 'ND': 0.0},
+    'E': {
+        'A': 1.0,
+        'H': 1.0,
+        'F': 0.8,
+        'P': 0.6,
+        'POC': 0.6,
+        'U': 0.2,
+        'X': 0.0,
+        'ND': 0.0,
+    },
     # CVSS 2.0 temporal / environmental — included so parse_cvss retains them.
     'RL': {'OF': 0.0, 'TF': 0.4, 'W': 0.7, 'U': 1.0, 'ND': 0.0},
     'RC': {'UC': 0.3, 'UR': 0.6, 'C': 1.0, 'ND': 0.0},

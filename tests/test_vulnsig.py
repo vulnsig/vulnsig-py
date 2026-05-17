@@ -337,21 +337,29 @@ class TestCVSS2:
         assert calculate_score(CVSS2_WORST) == pytest.approx(10.0, abs=0.05)
 
     def test_score_auth_required(self):
-        assert calculate_score('AV:N/AC:L/Au:S/C:P/I:P/A:P') == pytest.approx(6.5, abs=0.05)
+        assert calculate_score('AV:N/AC:L/Au:S/C:P/I:P/A:P') == pytest.approx(
+            6.5, abs=0.05
+        )
 
     def test_score_local_ac_m(self):
-        assert calculate_score('AV:L/AC:M/Au:N/C:P/I:P/A:P') == pytest.approx(4.4, abs=0.05)
+        assert calculate_score('AV:L/AC:M/Au:N/C:P/I:P/A:P') == pytest.approx(
+            4.4, abs=0.05
+        )
 
     def test_score_with_temporal_lowers(self):
         assert calculate_score(CVSS2_WITH_E_H) == pytest.approx(8.7, abs=0.05)
 
     def test_prefixed_score_matches_bare(self):
         bare = 'AV:N/AC:L/Au:N/C:P/I:P/A:P'
-        assert calculate_score(CVSS2_PREFIXED) == pytest.approx(calculate_score(bare), abs=0.05)
+        assert calculate_score(CVSS2_PREFIXED) == pytest.approx(
+            calculate_score(bare), abs=0.05
+        )
 
     def test_parens_score_matches_unwrapped(self):
         unwrapped = 'AV:N/AC:M/Au:N/C:N/I:P/A:N'
-        assert calculate_score(CVSS2_PARENS) == pytest.approx(calculate_score(unwrapped), abs=0.05)
+        assert calculate_score(CVSS2_PARENS) == pytest.approx(
+            calculate_score(unwrapped), abs=0.05
+        )
 
     def test_renders_bare(self):
         svg = render_glyph(CVSS2_HEARTBLEED)

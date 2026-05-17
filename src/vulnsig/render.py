@@ -39,7 +39,11 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     ac = get_severity(metrics, 'AC')
 
     # CVSS 2.0 and 3.x have no AT — render as solid.
-    at = 1.0 if (is_version3(version) or is_version2(version)) else get_severity(metrics, 'AT')
+    at = (
+        1.0
+        if (is_version3(version) or is_version2(version))
+        else get_severity(metrics, 'AT')
+    )
 
     # CVSS 2.0 and 3.x both use C/I/A (not VC/VI/VA). The shared severity
     # table resolves v2's N/P/C and v3's N/L/H from the same lookup.
