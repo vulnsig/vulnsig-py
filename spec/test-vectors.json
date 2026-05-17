@@ -434,6 +434,156 @@
     }
   },
   {
+    "name": "Log4Shell E:A",
+    "cve": "CVE-2021-44228",
+    "score": 10.0,
+    "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H/E:A",
+    "expect": {
+      "starPoints": 8,
+      "segmented": false,
+      "splitBand": true,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "thin",
+      "exploitMaturity": "A"
+    }
+  },
+  {
+    "name": "Log4Shell E:P",
+    "cve": "CVE-2021-44228",
+    "score": 10.0,
+    "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H/E:P",
+    "expect": {
+      "starPoints": 8,
+      "segmented": false,
+      "splitBand": true,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "thin",
+      "exploitMaturity": "P"
+    }
+  },
+  {
+    "name": "Log4Shell E:U",
+    "cve": "CVE-2021-44228",
+    "score": 10.0,
+    "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H/E:U",
+    "expect": {
+      "starPoints": 8,
+      "segmented": false,
+      "splitBand": true,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "thin",
+      "exploitMaturity": "U"
+    }
+  },
+  {
+    "name": "Log4Shell E:X",
+    "cve": "CVE-2021-44228",
+    "score": 10.0,
+    "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H/E:X",
+    "expect": {
+      "starPoints": 8,
+      "segmented": false,
+      "splitBand": true,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "thin",
+      "exploitMaturity": "X"
+    }
+  },
+  {
+    "name": "Synth: AV:A AC:H E:A",
+    "cve": "Synthesized",
+    "score": 6.0,
+    "vector": "CVSS:4.0/AV:A/AC:H/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N/E:A",
+    "expect": {
+      "starPoints": 6,
+      "segmented": false,
+      "splitBand": false,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "thin",
+      "exploitMaturity": "A"
+    }
+  },
+  {
+    "name": "Synth: AV:A AC:H E:P",
+    "cve": "Synthesized",
+    "score": 5.1,
+    "vector": "CVSS:4.0/AV:A/AC:H/AT:P/PR:N/UI:N/VC:H/VI:N/VA:N/SC:L/SI:N/SA:N/E:P",
+    "expect": {
+      "starPoints": 6,
+      "segmented": true,
+      "splitBand": true,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "thin",
+      "exploitMaturity": "P"
+    }
+  },
+  {
+    "name": "Synth: AV:L AC:H E:A",
+    "cve": "Synthesized",
+    "score": 5.6,
+    "vector": "CVSS:4.0/AV:L/AC:H/AT:P/PR:L/UI:N/VC:H/VI:N/VA:N/SC:H/SI:N/SA:N/E:A",
+    "expect": {
+      "starPoints": 4,
+      "segmented": true,
+      "splitBand": true,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "medium",
+      "exploitMaturity": "A"
+    }
+  },
+  {
+    "name": "Synth: AV:L AC:H E:P",
+    "cve": "Synthesized",
+    "score": 5.5,
+    "vector": "CVSS:4.0/AV:L/AC:H/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N/E:P",
+    "expect": {
+      "starPoints": 4,
+      "segmented": false,
+      "splitBand": false,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "medium",
+      "exploitMaturity": "P"
+    }
+  },
+  {
+    "name": "Synth: AV:P AC:H E:A",
+    "cve": "Synthesized",
+    "score": 4.4,
+    "vector": "CVSS:4.0/AV:P/AC:H/AT:P/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:A",
+    "expect": {
+      "starPoints": 3,
+      "segmented": true,
+      "splitBand": false,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "thin",
+      "exploitMaturity": "A"
+    }
+  },
+  {
+    "name": "Synth: AV:P AC:H E:P",
+    "cve": "Synthesized",
+    "score": 4.0,
+    "vector": "CVSS:4.0/AV:P/AC:H/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:L/SI:N/SA:N/E:P",
+    "expect": {
+      "starPoints": 3,
+      "segmented": false,
+      "splitBand": true,
+      "spikes": "long",
+      "bumps": false,
+      "prStroke": "thin",
+      "exploitMaturity": "P"
+    }
+  },
+  {
     "name": "Log4Shell (3.1)",
     "cve": "CVE-2021-44228",
     "score": 10.0,
@@ -512,6 +662,62 @@
       "starPoints": 8,
       "segmented": false,
       "splitBand": true,
+      "spikes": "none",
+      "bumps": false,
+      "prStroke": "thin"
+    }
+  },
+  {
+    "name": "Heartbleed (2.0)",
+    "cve": "CVE-2014-0160",
+    "score": 5.0,
+    "vector": "AV:N/AC:L/Au:N/C:P/I:N/A:N",
+    "expect": {
+      "starPoints": 8,
+      "segmented": false,
+      "splitBand": false,
+      "spikes": "none",
+      "bumps": false,
+      "prStroke": "none"
+    }
+  },
+  {
+    "name": "Conficker MS08-067 (2.0)",
+    "cve": "CVE-2008-4250",
+    "score": 10.0,
+    "vector": "AV:N/AC:L/Au:N/C:C/I:C/A:C",
+    "expect": {
+      "starPoints": 8,
+      "segmented": false,
+      "splitBand": false,
+      "spikes": "none",
+      "bumps": false,
+      "prStroke": "none"
+    }
+  },
+  {
+    "name": "Local Privilege Esc (2.0)",
+    "cve": "Example",
+    "score": 4.4,
+    "vector": "AV:L/AC:M/Au:N/C:P/I:P/A:P",
+    "expect": {
+      "starPoints": 4,
+      "segmented": false,
+      "splitBand": false,
+      "spikes": "none",
+      "bumps": false,
+      "prStroke": "none"
+    }
+  },
+  {
+    "name": "Auth-required v2",
+    "cve": "Example",
+    "score": 6.5,
+    "vector": "AV:N/AC:L/Au:S/C:P/I:P/A:P",
+    "expect": {
+      "starPoints": 8,
+      "segmented": false,
+      "splitBand": false,
       "spikes": "none",
       "bumps": false,
       "prStroke": "thin"

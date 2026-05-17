@@ -2,7 +2,7 @@
 
 Render CVSS vulnerability vectors as expressive SVG glyphs. Each glyph encodes all base metrics visually with shape, color, rings, and texture, so vulnerabilities are recognizable at a glance.
 
-Supports CVSS 4.0, 3.1, and 3.0.
+Supports CVSS 4.0, 3.1, 3.0, and 2.0.
 
 Visit [vulnsig.io](https://vulnsig.io) to interactively explore CVSS glyph configurations and recent or well-known CVE vector glyphs.
 
