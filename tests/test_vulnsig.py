@@ -5,7 +5,12 @@ import pytest
 
 from vulnsig import render_glyph
 from vulnsig.color import score_to_hue
-from vulnsig.parse import detect_cvss_version, is_version3, parse_cvss
+from vulnsig.parse import (
+    detect_cvss_version,
+    is_version2,
+    is_version3,
+    parse_cvss,
+)
 from vulnsig.score import calculate_score
 
 LOG4SHELL = 'CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H'
@@ -26,6 +31,16 @@ CVSS31_XSS = 'CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N'
 CVSS30_LOG4SHELL = 'CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H'
 CVSS30_HEARTBLEED = 'CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N'
 CVSS30_XSS = 'CVSS:3.0/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N'
+
+# CVSS 2.0 test vectors (bare, no prefix)
+CVSS2_HEARTBLEED = 'AV:N/AC:L/Au:N/C:P/I:N/A:N'
+CVSS2_WORST = 'AV:N/AC:L/Au:N/C:C/I:C/A:C'
+CVSS2_LOCAL_LOW = 'AV:L/AC:H/Au:M/C:P/I:N/A:N'
+CVSS2_PREFIXED = 'CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:P'
+CVSS2_WITH_E_H = 'AV:N/AC:L/Au:N/C:C/I:C/A:C/E:H/RL:OF/RC:C'
+CVSS2_AC_M = 'AV:N/AC:M/Au:S/C:P/I:P/A:N'
+CVSS2_PARENS = '(AV:N/AC:M/Au:N/C:N/I:P/A:N)'
+CVSS2_AU_M = 'AV:N/AC:L/Au:M/C:C/I:C/A:C'
 
 _TEST_VECTORS_PATH = Path(__file__).parent.parent / 'spec' / 'test-vectors.json'
 with _TEST_VECTORS_PATH.open() as _f:
@@ -89,13 +104,23 @@ class TestDetectCVSSVersion:
     def test_detects_40(self):
         assert detect_cvss_version(LOG4SHELL) == '4.0'
 
-    def test_raises_for_unsupported_version(self):
-        with pytest.raises(ValueError, match='Unsupported CVSS version'):
-            detect_cvss_version('CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:P')
+    def test_detects_20_bare(self):
+        assert detect_cvss_version(CVSS2_HEARTBLEED) == '2.0'
 
-    def test_raises_for_missing_prefix(self):
+    def test_detects_20_prefixed(self):
+        assert detect_cvss_version(CVSS2_PREFIXED) == '2.0'
+
+    def test_detects_20_parens_wrapped(self):
+        assert detect_cvss_version(CVSS2_PARENS) == '2.0'
+
+    def test_raises_for_unsupported_prefix(self):
         with pytest.raises(ValueError, match='Unsupported CVSS version'):
-            detect_cvss_version('AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H')
+            detect_cvss_version('CVSS:1.0/AV:N')
+
+    def test_raises_for_bare_garbage(self):
+        # No Au — doesn't look like a CVSS 2.0 base vector.
+        with pytest.raises(ValueError, match='Unsupported CVSS version'):
+            detect_cvss_version('foo:bar/baz:qux')
 
 
 # ---------------------------------------------------------------------------
@@ -256,3 +281,114 @@ class TestRenderGlyph:
         svg = render_glyph(CVSS31_LOG4SHELL)
         assert not re.search(r'<circle[^>]*fill="hsla\(', svg)
         assert not re.search(r'<circle[^>]*stroke="hsla\(', svg)
+
+
+# ---------------------------------------------------------------------------
+# CVSS 2.0
+# ---------------------------------------------------------------------------
+
+
+class TestIsVersion2:
+    def test_true_for_20(self):
+        assert is_version2('2.0') is True
+
+    def test_false_for_other(self):
+        assert is_version2('3.0') is False
+        assert is_version2('3.1') is False
+        assert is_version2('4.0') is False
+
+
+class TestCVSS2:
+    def test_parses_bare(self):
+        m = parse_cvss(CVSS2_HEARTBLEED)
+        assert m['AV'] == 'N'
+        assert m['AC'] == 'L'
+        assert m['Au'] == 'N'
+        assert m['C'] == 'P'
+        assert m['I'] == 'N'
+        assert m['A'] == 'N'
+
+    def test_parses_prefixed(self):
+        m = parse_cvss(CVSS2_PREFIXED)
+        assert m['Au'] == 'N'
+        assert m['C'] == 'P'
+
+    def test_parses_parens_wrapped(self):
+        m = parse_cvss(CVSS2_PARENS)
+        assert m['AV'] == 'N'
+        assert m['AC'] == 'M'
+        assert m['I'] == 'P'
+
+    def test_parses_temporal(self):
+        m = parse_cvss(CVSS2_WITH_E_H)
+        assert m['E'] == 'H'
+        assert m['RL'] == 'OF'
+        assert m['RC'] == 'C'
+
+    def test_parses_ac_m(self):
+        m = parse_cvss(CVSS2_AC_M)
+        assert m['AC'] == 'M'
+        assert m['Au'] == 'S'
+
+    def test_score_heartbleed(self):
+        assert calculate_score(CVSS2_HEARTBLEED) == pytest.approx(5.0, abs=0.05)
+
+    def test_score_worst(self):
+        assert calculate_score(CVSS2_WORST) == pytest.approx(10.0, abs=0.05)
+
+    def test_score_auth_required(self):
+        assert calculate_score('AV:N/AC:L/Au:S/C:P/I:P/A:P') == pytest.approx(
+            6.5, abs=0.05
+        )
+
+    def test_score_local_ac_m(self):
+        assert calculate_score('AV:L/AC:M/Au:N/C:P/I:P/A:P') == pytest.approx(
+            4.4, abs=0.05
+        )
+
+    def test_score_with_temporal_lowers(self):
+        assert calculate_score(CVSS2_WITH_E_H) == pytest.approx(8.7, abs=0.05)
+
+    def test_prefixed_score_matches_bare(self):
+        bare = 'AV:N/AC:L/Au:N/C:P/I:P/A:P'
+        assert calculate_score(CVSS2_PREFIXED) == pytest.approx(
+            calculate_score(bare), abs=0.05
+        )
+
+    def test_parens_score_matches_unwrapped(self):
+        unwrapped = 'AV:N/AC:M/Au:N/C:N/I:P/A:N'
+        assert calculate_score(CVSS2_PARENS) == pytest.approx(
+            calculate_score(unwrapped), abs=0.05
+        )
+
+    def test_renders_bare(self):
+        svg = render_glyph(CVSS2_HEARTBLEED)
+        assert svg.startswith('<svg ')
+        assert svg.endswith('</svg>')
+
+    def test_renders_parens(self):
+        svg = render_glyph(CVSS2_PARENS)
+        assert svg.startswith('<svg ')
+
+    def test_renders_ac_m(self):
+        svg = render_glyph(CVSS2_AC_M)
+        assert svg.startswith('<svg ')
+
+    def test_au_m_produces_thick_stroke(self):
+        svg = render_glyph(CVSS2_AU_M)
+        assert 'stroke-width="3.5"' in svg
+
+    def test_au_n_produces_no_stroke(self):
+        svg = render_glyph(CVSS2_WORST)
+        assert 'stroke-width="3.5"' not in svg
+        assert 'stroke-width="1.5"' not in svg
+
+    def test_e_h_renders_concentric_rings(self):
+        import re
+
+        svg = render_glyph(CVSS2_WITH_E_H)
+        assert re.search(r'<circle[^>]*stroke="hsla\(', svg)
+
+    def test_renders_local_low(self):
+        svg = render_glyph(CVSS2_LOCAL_LOW)
+        assert svg.startswith('<svg ')

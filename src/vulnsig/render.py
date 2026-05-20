@@ -4,7 +4,13 @@ from typing import NamedTuple
 
 from .color import score_to_hue
 from .geometry import arc_path, radial_cuts, ring_fill, star_path
-from .parse import detect_cvss_version, get_severity, is_version3, parse_cvss
+from .parse import (
+    detect_cvss_version,
+    get_severity,
+    is_version2,
+    is_version3,
+    parse_cvss,
+)
 from .score import calculate_score
 
 
@@ -29,37 +35,31 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     sat = hue_result['sat']
     light = hue_result['light']
 
-    # Metric severities - handle CVSS 3.0, 3.1, and 4.0
+    # Metric severities
     ac = get_severity(metrics, 'AC')
 
-    # For CVSS 3.0/3.1, AT doesn't exist, so always treat as solid (AT:N)
-    at = 1.0 if is_version3(version) else get_severity(metrics, 'AT')
-
-    # For CVSS 3.0/3.1, use C/I/A instead of VC/VI/VA
-    vc = (
-        get_severity(metrics, 'C')
-        if is_version3(version)
-        else get_severity(metrics, 'VC')
-    )
-    vi = (
-        get_severity(metrics, 'I')
-        if is_version3(version)
-        else get_severity(metrics, 'VI')
-    )
-    va = (
-        get_severity(metrics, 'A')
-        if is_version3(version)
-        else get_severity(metrics, 'VA')
+    # CVSS 2.0 and 3.x have no AT — render as solid.
+    at = (
+        1.0
+        if (is_version3(version) or is_version2(version))
+        else get_severity(metrics, 'AT')
     )
 
-    # For CVSS 3.0/3.1, if S:C (Changed), both bands mirror C/I/A. If S:U (Unchanged), no split.
-    if is_version3(version):
+    # CVSS 2.0 and 3.x both use C/I/A (not VC/VI/VA). The shared severity
+    # table resolves v2's N/P/C and v3's N/L/H from the same lookup.
+    use_v3_cia = is_version3(version) or is_version2(version)
+    vc = get_severity(metrics, 'C' if use_v3_cia else 'VC')
+    vi = get_severity(metrics, 'I' if use_v3_cia else 'VI')
+    va = get_severity(metrics, 'A' if use_v3_cia else 'VA')
+
+    # CVSS 2.0 has no scope. CVSS 3.x splits the band only when S:C.
+    if is_version2(version):
+        sc = si = sa = 0.0
+    elif is_version3(version):
         scope_changed = get_severity(metrics, 'S') > 0.5  # S:C = 1.0, S:U = 0.0
         if scope_changed:
-            # Split band: both bands mirror C/I/A
             sc, si, sa = vc, vi, va
         else:
-            # No split
             sc = si = sa = 0.0
     else:
         # CVSS 4.0: use SC/SI/SA directly
@@ -91,9 +91,12 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     star_outer_r = inner_r - 2
     star_inner_r = star_outer_r * (0.55 - ac * 0.35)
 
-    # PR stroke
-    pr_raw = metrics.get('PR', '')
-    pr_stroke_width = 3.5 if pr_raw == 'H' else (1.5 if pr_raw == 'L' else 0.0)
+    # Star outline: CVSS 3.x/4.0 use PR (N/L/H); CVSS 2.0 reuses the channel
+    # for Au (N/S/M).
+    pr_raw = metrics.get('Au', '') if is_version2(version) else metrics.get('PR', '')
+    pr_stroke_width = (
+        3.5 if pr_raw in ('H', 'M') else (1.5 if pr_raw in ('L', 'S') else 0.0)
+    )
 
     # UI spikes/bumps
     ui_raw = metrics.get('UI', '')
@@ -162,15 +165,16 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
     # Z-order 3: Background circle (transparent)
     parts.append(f'<circle cx="{cx}" cy="{cy}" r="{inner_r}" fill="none"/>')
 
-    # Z-order 3.5: E (Exploit Maturity) marker — CVSS 4.0 only, behind the star
-    # A (Attacked) → concentric rings at 0.5 opacity
-    # P (PoC)      → solid filled circle at 0.375 opacity
-    # U / X        → no marker
+    # Z-order 3.5: E (Exploit Maturity) marker — CVSS 4.0 and 2.0, behind the star.
+    # CVSS 4.0: A (Attacked) → rings, P (PoC) → disc, U/X → none.
+    # CVSS 2.0: H (High)     → rings, POC/F  → disc, U/ND → none.
     e_raw = None if is_version3(version) else metrics.get('E')
-    if e_raw == 'A' or e_raw == 'P':
+    e_rings = e_raw in ('A', 'H')
+    e_disc = e_raw in ('P', 'POC', 'F')
+    if e_rings or e_disc:
         e_circle_r = inner_r - ring_gap
         e_ring_gap = ring_gap * 3
-        if e_raw == 'A':
+        if e_rings:
             e_color = f'hsla({hue}, {sat}%, {sf_light}%, 0.5)'
             sw = ring_width
             step = sw + e_ring_gap
@@ -181,7 +185,6 @@ def render_glyph(vector: str, score: float | None = None, size: int = 120) -> st
                 )
                 r -= step
         else:
-            # E:P → solid filled circle
             parts.append(
                 f'<circle cx="{cx}" cy="{cy}" r="{e_circle_r}" fill="hsla({hue}, {sat}%, {sf_light}%, 0.375)"/>'
             )
