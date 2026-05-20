@@ -1,4 +1,4 @@
-# vulnsig-py
+# vulnsig
 
 Render CVSS vulnerability vectors as expressive SVG glyphs. Each glyph encodes all base metrics visually with shape, color, rings, and texture, so vulnerabilities are recognizable at a glance.
 
