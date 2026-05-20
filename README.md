@@ -72,6 +72,10 @@ Python 3.10+
 
 ## What Is New in VulnSig
 
+### 2.0.0
+
+Support for CVSS 2.0.
+
 ### 1.3.0
 
 Added rendering of Exploit Maturity.
